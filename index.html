@@ -39,6 +39,8 @@
       font-size: 17px;
     }
   </style>
+  <!-- LIFF SDK 読み込み -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
@@ -50,11 +52,37 @@
 </div>
 
 <script>
-  document.getElementById("okBtn").addEventListener("click", function () {
-    // ページを閉じる処理
-    window.open('', '_self'); // iOS の Safari / WebView で必要
-    window.close();           // タブを閉じる
-  });
+  // ★ ここにあなたの LIFF ID を入れる
+  const LIFF_ID = "YOUR_LIFF_ID_HERE";
+
+  async function main() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+
+      document.getElementById("okBtn").addEventListener("click", () => {
+        if (liff.isInClient()) {
+          // LINEアプリ内ブラウザの場合 → 閉じる
+          liff.closeWindow();
+        } else {
+          // 通常ブラウザで開いた場合 → タブを閉じる or オーバーレイだけ消す
+          window.open('', '_self');
+          window.close();
+          // もし閉じられない環境用にフェイルセーフ
+          document.getElementById("overlay").style.display = "none";
+        }
+      });
+    } catch (e) {
+      console.error(e);
+      // LIFF初期化に失敗した場合もとりあえず動くように
+      document.getElementById("okBtn").addEventListener("click", () => {
+        window.open('', '_self');
+        window.close();
+        document.getElementById("overlay").style.display = "none";
+      });
+    }
+  }
+
+  main();
 </script>
 
 </body>
