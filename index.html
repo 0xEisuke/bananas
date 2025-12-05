@@ -2,34 +2,171 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>バナナのナス、バナナス</title>
+  <title>バナナススロット</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      background: #f4f4f4;
+      background: #fffde7;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
+    .game-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px 16px 32px;
+      background: #fffef3;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      text-align: center;
+      overflow: hidden;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 16px;
+    }
+    .slots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin: 8px 0 16px;
+    }
+    .slot {
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: transform 0.15s ease, color 0.15s ease, text-shadow 0.15s ease;
+    }
+
+    /* 回転中アニメーション */
+    .slot.spinning {
+      animation: spinSlot 0.4s linear infinite;
+      opacity: 0.9;
+    }
+    @keyframes spinSlot {
+      0%   { transform: translateY(0) scale(1); }
+      25%  { transform: translateY(-5px) scale(1.05); }
+      50%  { transform: translateY(0) scale(1); }
+      75%  { transform: translateY(5px) scale(1.05); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .result {
+      min-height: 40px;
+      margin-bottom: 16px;
+    }
+    .result-text {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .result-emoji {
+      font-size: 28px;
+    }
+    .btn-spin {
+      display: inline-block;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #ffeb3b, #ffc107);
+      box-shadow: 0 3px 0 #f9a825;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, opacity 0.1s ease;
+    }
+    .btn-spin:active {
+      transform: translateY(2px);
+      box-shadow: 0 1px 0 #f9a825;
+    }
+    .btn-spin:disabled {
+      opacity: 0.5;
+      cursor: default;
+      transform: none;
+      box-shadow: 0 3px 0 #f9a825;
+    }
+
+    /* 🍆 ナスヒット */
+    .hit-nasu {
+      color: #7b1fa2;
+      text-shadow: 0 0 8px rgba(123, 31, 162, 0.7);
+    }
+    /* 🍌 バナナヒット */
+    .hit-banana {
+      color: #fbc02d;
+      text-shadow: 0 0 8px rgba(251, 192, 45, 0.9);
+    }
+    /* 🍌🍆 バナナスヒット（全部） */
+    .hit-bananas {
+      color: #ff5722;
+      text-shadow: 0 0 10px rgba(255, 87, 34, 0.9);
+      transform: scale(1.15);
+    }
+
+    /* 🍌🍆 降ってくるアニメーション */
+    #emoji-rain-container {
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      z-index: 10;
+    }
+    .emoji-drop {
+      position: absolute;
+      top: -10%;
+      font-size: 24px;
+      animation: fall linear forwards;
+    }
+    @keyframes fall {
+      0% {
+        transform: translateY(-100%);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(120vh);
+        opacity: 0;
+      }
+    }
+
+    /* バナナのナス、バナナス ポップアップ */
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.3);
-      display: flex;
+      background: rgba(0,0,0,0.35);
+      display: none;           /* 最初は隠す */
       align-items: center;
       justify-content: center;
       z-index: 9999;
     }
     .dialog {
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
       min-width: 260px;
       max-width: 80%;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
       text-align: center;
       overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.35);
     }
     .dialog-message {
-      padding: 20px 16px;
+      padding: 18px 16px 14px;
       font-size: 16px;
     }
     .dialog-button {
@@ -37,52 +174,253 @@
       padding: 10px 0;
       color: #007aff;
       font-size: 17px;
+      cursor: pointer;
     }
   </style>
-  <!-- LIFF SDK 読み込み -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
 <body>
 
-<div class="overlay" id="overlay">
+<div class="game-wrapper">
+  <h1>バナナススロット 🍌🍆</h1>
+  <div class="subtitle">バ・ナ・ス の4文字スロット。バナナスが出ると…？</div>
+
+  <div class="slots">
+    <div class="slot" id="slot0">バ</div>
+    <div class="slot" id="slot1">ナ</div>
+    <div class="slot" id="slot2">ナ</div>
+    <div class="slot" id="slot3">ス</div>
+  </div>
+
+  <div class="result">
+    <div class="result-text" id="result-text">バナナスを狙え！</div>
+    <div class="result-emoji" id="result-emoji">🍌🍆</div>
+  </div>
+
+  <button class="btn-spin" id="spin-btn">回す！</button>
+
+  <!-- 🍌🍆 が降ってくるコンテナ -->
+  <div id="emoji-rain-container"></div>
+</div>
+
+<!-- バナナのナス、バナナス ポップアップ -->
+<div class="overlay" id="banana-popup">
   <div class="dialog">
     <div class="dialog-message">バナナのナス、バナナス</div>
-    <div class="dialog-button" id="okBtn">了解</div>
+    <div class="dialog-button" id="popup-ok-btn">了解</div>
   </div>
 </div>
 
+<!-- 効果音（同じフォルダに mp3 を置く） -->
+<audio id="se-nasu" src="nasu.mp3" preload="auto"></audio>
+<audio id="se-banana" src="banana.mp3" preload="auto"></audio>
+<audio id="se-bananas" src="bananas.mp3" preload="auto"></audio>
+
 <script>
-  // ★ ここにあなたの LIFF ID を入れる
-  const LIFF_ID = "YOUR_LIFF_ID_HERE";
+  const CHARS = ["バ", "ナ", "ス"];
+  const slots = [
+    document.getElementById("slot0"),
+    document.getElementById("slot1"),
+    document.getElementById("slot2"),
+    document.getElementById("slot3"),
+  ];
+  const resultTextEl = document.getElementById("result-text");
+  const resultEmojiEl = document.getElementById("result-emoji");
+  const spinBtn = document.getElementById("spin-btn");
 
-  async function main() {
+  const rainContainer = document.getElementById("emoji-rain-container");
+
+  const popup = document.getElementById("banana-popup");
+  const popupOkBtn = document.getElementById("popup-ok-btn");
+
+  // 効果音
+  const seNasu = document.getElementById("se-nasu");
+  const seBanana = document.getElementById("se-banana");
+  const seBananas = document.getElementById("se-bananas");
+
+  let isSpinning = false;
+
+  popupOkBtn.addEventListener("click", () => {
+    popup.style.display = "none";
+  });
+
+  function setResult(text, emoji) {
+    resultTextEl.textContent = text;
+    resultEmojiEl.textContent = emoji;
+  }
+
+  function playSound(audioEl) {
+    if (!audioEl) return;
     try {
-      await liff.init({ liffId: LIFF_ID });
-
-      document.getElementById("okBtn").addEventListener("click", () => {
-        if (liff.isInClient()) {
-          // LINEアプリ内ブラウザの場合 → 閉じる
-          liff.closeWindow();
-        } else {
-          // 通常ブラウザで開いた場合 → タブを閉じる or オーバーレイだけ消す
-          window.open('', '_self');
-          window.close();
-          // もし閉じられない環境用にフェイルセーフ
-          document.getElementById("overlay").style.display = "none";
-        }
-      });
+      audioEl.currentTime = 0;
+      audioEl.play();
     } catch (e) {
-      console.error(e);
-      // LIFF初期化に失敗した場合もとりあえず動くように
-      document.getElementById("okBtn").addEventListener("click", () => {
-        window.open('', '_self');
-        window.close();
-        document.getElementById("overlay").style.display = "none";
+      // モバイルの自動再生制限などで失敗することもあるので無視
+    }
+  }
+
+  // 🍌🍆 降らせる
+  function startEmojiRain(type) {
+    const count = 40;
+    const emojis =
+      type === "nasu" ? ["🍆"] :
+      type === "banana" ? ["🍌"] :
+      ["🍌", "🍆"];
+
+    for (let i = 0; i < count; i++) {
+      const span = document.createElement("span");
+      span.className = "emoji-drop";
+      span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      span.style.left = Math.random() * 100 + "%";
+      const duration = 2.5 + Math.random() * 1.5;
+      const delay = Math.random() * 0.8;
+      span.style.animationDuration = duration + "s";
+      span.style.animationDelay = delay + "s";
+      rainContainer.appendChild(span);
+      span.addEventListener("animationend", () => {
+        span.remove();
       });
     }
   }
 
-  main();
+  function clearEmojiRain() {
+    while (rainContainer.firstChild) {
+      rainContainer.removeChild(rainContainer.firstChild);
+    }
+  }
+
+  function clearHighlights() {
+    slots.forEach(slot => {
+      slot.classList.remove("hit-nasu", "hit-banana", "hit-bananas");
+    });
+  }
+
+  function highlight(indices, className) {
+    clearHighlights();
+    indices.forEach(idx => {
+      if (slots[idx]) {
+        slots[idx].classList.add(className);
+      }
+    });
+  }
+
+  function findIndices(result, pattern) {
+    const indicesSet = new Set();
+    let start = 0;
+    while (true) {
+      const idx = result.indexOf(pattern, start);
+      if (idx === -1) break;
+      for (let i = 0; i < pattern.length; i++) {
+        indicesSet.add(idx + i);
+      }
+      start = idx + 1;
+    }
+    return Array.from(indicesSet.values()).sort();
+  }
+
+  // スロットを回す（アニメーション付き）
+  function spin() {
+    if (isSpinning) return;
+    isSpinning = true;
+    spinBtn.disabled = true;
+
+    clearEmojiRain();
+    popup.style.display = "none";
+    clearHighlights();
+    setResult("……", "");
+
+    // 回転開始
+    slots.forEach(slot => slot.classList.add("spinning"));
+
+    const spinDuration = 900; // 全体の回転時間(ms)
+    const interval = 80;      // ランダム書き換え間隔(ms)
+    let elapsed = 0;
+
+    const spinTimer = setInterval(() => {
+      elapsed += interval;
+
+      // 回転中はランダム文字を表示
+      for (let i = 0; i < 4; i++) {
+        const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+        slots[i].textContent = ch;
+      }
+
+      if (elapsed >= spinDuration) {
+        clearInterval(spinTimer);
+
+        // 最終結果を決定
+        let result = "";
+        for (let i = 0; i < 4; i++) {
+          const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+          slots[i].textContent = ch;
+          result += ch;
+        }
+
+        // 回転停止
+        slots.forEach(slot => slot.classList.remove("spinning"));
+
+        // 判定へ
+        judgeResult(result);
+
+        spinBtn.disabled = false;
+        isSpinning = false;
+      }
+    }, interval);
+  }
+
+  // 役判定
+  function judgeResult(result) {
+    clearHighlights();
+
+    const nasuIndices = findIndices(result, "ナス");
+    const bananaIndices = findIndices(result, "バナナ");
+    const bananasIndices = (result === "バナナス") ? [0, 1, 2, 3] : [];
+
+    const hasNasu = nasuIndices.length > 0;
+    const hasBanana = bananaIndices.length > 0;
+    const isBananas = (result === "バナナス");
+
+    clearEmojiRain();
+
+    if (isBananas) {
+      // 表示順：ナス → バナナ → バナナス
+      highlight(nasuIndices, "hit-nasu");
+      setResult("ナス！", "🍆");
+      startEmojiRain("nasu");
+      playSound(seNasu);
+
+      setTimeout(() => {
+        highlight(bananaIndices, "hit-banana");
+        setResult("バナナ！", "🍌");
+        startEmojiRain("banana");
+        playSound(seBanana);
+      }, 700);
+
+      setTimeout(() => {
+        highlight(bananasIndices, "hit-bananas");
+        setResult("バナナス！！！", "🍌🍆");
+        startEmojiRain("both");
+        playSound(seBananas);
+        popup.style.display = "flex";
+      }, 1400);
+
+    } else if (hasBanana) {
+      highlight(bananaIndices, "hit-banana");
+      setResult("バナナ！", "🍌");
+      startEmojiRain("banana");
+      playSound(seBanana);
+
+    } else if (hasNasu) {
+      highlight(nasuIndices, "hit-nasu");
+      setResult("ナス！", "🍆");
+      startEmojiRain("nasu");
+      playSound(seNasu);
+
+    } else {
+      setResult("ハズレ…", "🥲");
+    }
+  }
+
+  spinBtn.addEventListener("click", spin);
 </script>
 
 </body>
