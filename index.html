@@ -20,8 +20,8 @@
     .game-wrapper {
       position: relative;
       width: 100%;
-      max-width: 480px;
-      padding: 24px 16px 32px;
+      max-width: 520px;
+      padding: 20px 14px 28px;
       background: #fffef3;
       border-radius: 16px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -29,19 +29,35 @@
       overflow: hidden;
     }
     h1 {
-      margin: 0 0 12px;
+      margin: 0 0 6px;
       font-size: 22px;
     }
     .subtitle {
       font-size: 13px;
       color: #666;
-      margin-bottom: 16px;
+      margin-bottom: 10px;
     }
+
+    .status {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      font-size: 13px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .status span {
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
     .slots {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin: 8px 0 16px;
+      margin: 8px 0 14px;
     }
     .slot {
       width: 60px;
@@ -70,28 +86,29 @@
     }
 
     .result {
-      min-height: 40px;
-      margin-bottom: 16px;
+      min-height: 38px;
+      margin-bottom: 12px;
     }
     .result-text {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: bold;
       margin-bottom: 4px;
     }
     .result-emoji {
-      font-size: 28px;
+      font-size: 24px;
     }
     .btn-spin {
       display: inline-block;
       border: none;
       border-radius: 999px;
-      padding: 10px 28px;
-      font-size: 16px;
+      padding: 9px 26px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
       background: linear-gradient(135deg, #ffeb3b, #ffc107);
       box-shadow: 0 3px 0 #f9a825;
       transition: transform 0.05s ease, box-shadow 0.05s ease, opacity 0.1s ease;
+      margin-bottom: 10px;
     }
     .btn-spin:active {
       transform: translateY(2px);
@@ -104,17 +121,15 @@
       box-shadow: 0 3px 0 #f9a825;
     }
 
-    /* 🍆 ナスヒット */
+    /* ヒット時の色 */
     .hit-nasu {
       color: #7b1fa2;
       text-shadow: 0 0 8px rgba(123, 31, 162, 0.7);
     }
-    /* 🍌 バナナヒット */
     .hit-banana {
       color: #fbc02d;
       text-shadow: 0 0 8px rgba(251, 192, 45, 0.9);
     }
-    /* 🍌🍆 バナナスヒット（全部） */
     .hit-bananas {
       color: #ff5722;
       text-shadow: 0 0 10px rgba(255, 87, 34, 0.9);
@@ -151,7 +166,7 @@
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.35);
-      display: none;           /* 最初は隠す */
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: 9999;
@@ -176,13 +191,59 @@
       font-size: 17px;
       cursor: pointer;
     }
+
+    /* 育成UI */
+    .upgrades {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+      font-size: 12px;
+    }
+    .upgrade-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 6px 8px 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      text-align: left;
+    }
+    .upgrade-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+      font-size: 12px;
+    }
+    .upgrade-info {
+      font-size: 11px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .upgrade-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      background: #e3f2fd;
+      color: #0d47a1;
+      width: 100%;
+    }
+    .upgrade-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
   </style>
 </head>
 <body>
 
 <div class="game-wrapper">
   <h1>バナナススロット 🍌🍆</h1>
-  <div class="subtitle">バ・ナ・ス の4文字スロット。バナナスが出ると…？</div>
+  <div class="subtitle">ポイントとアイテムで育成しながら、バナナスを狙え！</div>
+
+  <div class="status">
+    <span id="point-display">ポイント: 100</span>
+    <span id="banana-display">🍌: 0</span>
+    <span id="eggplant-display">🍆: 0</span>
+  </div>
 
   <div class="slots">
     <div class="slot" id="slot0">バ</div>
@@ -196,10 +257,49 @@
     <div class="result-emoji" id="result-emoji">🍌🍆</div>
   </div>
 
-  <button class="btn-spin" id="spin-btn">回す！</button>
+  <button class="btn-spin" id="spin-btn">10 pt で回す！</button>
 
   <!-- 🍌🍆 が降ってくるコンテナ -->
   <div id="emoji-rain-container"></div>
+
+  <!-- 育成UI -->
+  <div class="upgrades">
+    <div class="upgrade-card">
+      <div class="upgrade-title">🍌 1スロット目「バ」確率UP</div>
+      <div class="upgrade-info" id="prob-b-info">Lv.0（33%+0%）</div>
+      <button class="upgrade-btn" id="upgrade-prob-b-btn">🍌x1で強化（+3%）</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">🍆 4スロット目「ス」確率UP</div>
+      <div class="upgrade-info" id="prob-s-info">Lv.0（33%+0%）</div>
+      <button class="upgrade-btn" id="upgrade-prob-s-btn">🍆x1で強化（+3%）</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">倍率UP：バナナス</div>
+      <div class="upgrade-info">Lv.<span id="multi-bananas-level">0</span> 倍率x<span id="multi-bananas-factor">1.0</span></div>
+      <button class="upgrade-btn" id="upgrade-multi-bananas-btn">🍌x2🍆x2で強化</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">倍率UP：Wバナナ</div>
+      <div class="upgrade-info">Lv.<span id="multi-wbanana-level">0</span> 倍率x<span id="multi-wbanana-factor">1.0</span></div>
+      <button class="upgrade-btn" id="upgrade-multi-wbanana-btn">🍌x2で強化</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">倍率UP：Wナス</div>
+      <div class="upgrade-info">Lv.<span id="multi-wnasu-level">0</span> 倍率x<span id="multi-wnasu-factor">1.0</span></div>
+      <button class="upgrade-btn" id="upgrade-multi-wnasu-btn">🍆x2で強化</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">倍率UP：バナナ</div>
+      <div class="upgrade-info">Lv.<span id="multi-banana-level">0</span> 倍率x<span id="multi-banana-factor">1.0</span></div>
+      <button class="upgrade-btn" id="upgrade-multi-banana-btn">🍌x1で強化</button>
+    </div>
+    <div class="upgrade-card">
+      <div class="upgrade-title">倍率UP：ナス</div>
+      <div class="upgrade-info">Lv.<span id="multi-nasu-level">0</span> 倍率x<span id="multi-nasu-factor">1.0</span></div>
+      <button class="upgrade-btn" id="upgrade-multi-nasu-btn">🍆x1で強化</button>
+    </div>
+  </div>
 </div>
 
 <!-- バナナのナス、バナナス ポップアップ -->
@@ -227,6 +327,10 @@
   const resultEmojiEl = document.getElementById("result-emoji");
   const spinBtn = document.getElementById("spin-btn");
 
+  const pointDisplay = document.getElementById("point-display");
+  const bananaDisplay = document.getElementById("banana-display");
+  const eggplantDisplay = document.getElementById("eggplant-display");
+
   const rainContainer = document.getElementById("emoji-rain-container");
 
   const popup = document.getElementById("banana-popup");
@@ -238,9 +342,157 @@
   const seBananas = document.getElementById("se-bananas");
 
   let isSpinning = false;
+  let points = 100;      // 初期ポイント
+  let freeSpins = 0;     // 無料スピン
+
+  let bananas = 0;       // 🍌所持数
+  let eggplants = 0;     // 🍆所持数
+
+  let lastWasBananas = false;  // 直近の結果がバナナスだったかどうか
+
+
+  // 確率アップLv
+  let probBLevel = 0;    // slot0「バ」
+  let probSLevel = 0;    // slot3「ス」
+  const maxProbLevel = 10;
+  const fibCosts = [1,1,2,3,5,8,13,21,34,55]; // f(0)〜f(9) 的に使う
+
+  // 役ごとの倍率Lv（x1,1.5,2,...）
+  let multiBananasLv = 0;  // バナナス
+  let multiWBananaLv = 0;  // Wバナナ
+  let multiWNasuLv = 0;    // Wナス
+  let multiBananaLv = 0;   // バナナ
+  let multiNasuLv = 0;     // ナス
+  const maxMultiLevel = 10;
+
+  // 育成UI要素
+  const probBInfoEl = document.getElementById("prob-b-info");
+  const probSInfoEl = document.getElementById("prob-s-info");
+  const upgradeProbBBtn = document.getElementById("upgrade-prob-b-btn");
+  const upgradeProbSBtn = document.getElementById("upgrade-prob-s-btn");
+
+  const multiBananasLevelEl = document.getElementById("multi-bananas-level");
+  const multiWBananaLevelEl = document.getElementById("multi-wbanana-level");
+  const multiWNasuLevelEl = document.getElementById("multi-wnasu-level");
+  const multiBananaLevelEl = document.getElementById("multi-banana-level");
+  const multiNasuLevelEl = document.getElementById("multi-nasu-level");
+
+  const multiBananasFactorEl = document.getElementById("multi-bananas-factor");
+  const multiWBananaFactorEl = document.getElementById("multi-wbanana-factor");
+  const multiWNasuFactorEl = document.getElementById("multi-wnasu-factor");
+  const multiBananaFactorEl = document.getElementById("multi-banana-factor");
+  const multiNasuFactorEl = document.getElementById("multi-nasu-factor");
+
+  const upgradeMultiBananasBtn = document.getElementById("upgrade-multi-bananas-btn");
+  const upgradeMultiWBananaBtn = document.getElementById("upgrade-multi-wbanana-btn");
+  const upgradeMultiWNasuBtn = document.getElementById("upgrade-multi-wnasu-btn");
+  const upgradeMultiBananaBtn = document.getElementById("upgrade-multi-banana-btn");
+  const upgradeMultiNasuBtn = document.getElementById("upgrade-multi-nasu-btn");
+
+  function getMultiplier(level) {
+    return 1 + 0.5 * level;
+  }
+
+  function updateStatus() {
+    pointDisplay.textContent = `ポイント: ${points}`;
+    bananaDisplay.textContent = `🍌: ${bananas}`;
+    eggplantDisplay.textContent = `🍆: ${eggplants}`;
+
+    // スピンボタン表記
+    if (freeSpins > 0) {
+      spinBtn.textContent = `無料スピン: ${freeSpins} で回す`;
+    } else {
+      spinBtn.textContent = `10 pt で回す！`;
+    }
+
+    // 確率UP表記（Lv.n（33%+3n%））
+    const basePercent = 33;
+    probBInfoEl.textContent = `Lv.${probBLevel}（${basePercent}%+${probBLevel * 3}%）`;
+    probSInfoEl.textContent = `Lv.${probSLevel}（${basePercent}%+${probSLevel * 3}%）`;
+
+    // 倍率表示
+    multiBananasLevelEl.textContent = multiBananasLv;
+    multiWBananaLevelEl.textContent = multiWBananaLv;
+    multiWNasuLevelEl.textContent = multiWNasuLv;
+    multiBananaLevelEl.textContent = multiBananaLv;
+    multiNasuLevelEl.textContent = multiNasuLv;
+
+    multiBananasFactorEl.textContent = getMultiplier(multiBananasLv).toFixed(1);
+    multiWBananaFactorEl.textContent = getMultiplier(multiWBananaLv).toFixed(1);
+    multiWNasuFactorEl.textContent = getMultiplier(multiWNasuLv).toFixed(1);
+    multiBananaFactorEl.textContent = getMultiplier(multiBananaLv).toFixed(1);
+    multiNasuFactorEl.textContent = getMultiplier(multiNasuLv).toFixed(1);
+
+    // 確率UPボタン（MAX判定＆表記）
+    if (probBLevel >= maxProbLevel) {
+      upgradeProbBBtn.textContent = "Lv MAX";
+      upgradeProbBBtn.disabled = true;
+    } else {
+      const cost = fibCosts[probBLevel];
+      upgradeProbBBtn.textContent = `🍌x${cost}で強化（+3%）`;
+      upgradeProbBBtn.disabled = false;
+    }
+    if (probSLevel >= maxProbLevel) {
+      upgradeProbSBtn.textContent = "Lv MAX";
+      upgradeProbSBtn.disabled = true;
+    } else {
+      const cost = fibCosts[probSLevel];
+      upgradeProbSBtn.textContent = `🍆x${cost}で強化（+3%）`;
+      upgradeProbSBtn.disabled = false;
+    }
+
+    // 倍率UPボタン（コスト表記 + MAX判定）
+    if (multiBananasLv >= maxMultiLevel) {
+      upgradeMultiBananasBtn.textContent = "Lv MAX";
+      upgradeMultiBananasBtn.disabled = true;
+    } else {
+      const f = fibCosts[multiBananasLv];
+      upgradeMultiBananasBtn.textContent = `🍌x${2 * f}🍆x${2 * f}で強化`;
+      upgradeMultiBananasBtn.disabled = false;
+    }
+
+    if (multiWBananaLv >= maxMultiLevel) {
+      upgradeMultiWBananaBtn.textContent = "Lv MAX";
+      upgradeMultiWBananaBtn.disabled = true;
+    } else {
+      const f = fibCosts[multiWBananaLv];
+      upgradeMultiWBananaBtn.textContent = `🍌x${2 * f}で強化`;
+      upgradeMultiWBananaBtn.disabled = false;
+    }
+
+    if (multiWNasuLv >= maxMultiLevel) {
+      upgradeMultiWNasuBtn.textContent = "Lv MAX";
+      upgradeMultiWNasuBtn.disabled = true;
+    } else {
+      const f = fibCosts[multiWNasuLv];
+      upgradeMultiWNasuBtn.textContent = `🍆x${2 * f}で強化`;
+      upgradeMultiWNasuBtn.disabled = false;
+    }
+
+    if (multiBananaLv >= maxMultiLevel) {
+      upgradeMultiBananaBtn.textContent = "Lv MAX";
+      upgradeMultiBananaBtn.disabled = true;
+    } else {
+      const f = fibCosts[multiBananaLv];
+      upgradeMultiBananaBtn.textContent = `🍌x${f}で強化`;
+      upgradeMultiBananaBtn.disabled = false;
+    }
+
+    if (multiNasuLv >= maxMultiLevel) {
+      upgradeMultiNasuBtn.textContent = "Lv MAX";
+      upgradeMultiNasuBtn.disabled = true;
+    } else {
+      const f = fibCosts[multiNasuLv];
+      upgradeMultiNasuBtn.textContent = `🍆x${f}で強化`;
+      upgradeMultiNasuBtn.disabled = false;
+    }
+  }
+  updateStatus();
 
   popupOkBtn.addEventListener("click", () => {
     popup.style.display = "none";
+    // バナナスの表示を見終わって「了解」したら、次に回せるようにする
+    spinBtn.disabled = false;
   });
 
   function setResult(text, emoji) {
@@ -254,7 +506,7 @@
       audioEl.currentTime = 0;
       audioEl.play();
     } catch (e) {
-      // モバイルの自動再生制限などで失敗することもあるので無視
+      // 自動再生制限などで失敗することもある
     }
   }
 
@@ -291,6 +543,7 @@
   function clearHighlights() {
     slots.forEach(slot => {
       slot.classList.remove("hit-nasu", "hit-banana", "hit-bananas");
+      slot.style.transform = "";
     });
   }
 
@@ -317,9 +570,53 @@
     return Array.from(indicesSet.values()).sort();
   }
 
+  // スロットごとの文字抽選（確率調整対応）
+  function pickCharForSlot(slotIndex) {
+    const r = Math.random();
+
+    // slot0: 「バ」確率UP
+    if (slotIndex === 0) {
+      let pB = 1 / 3 + 0.03 * probBLevel;
+      if (pB > 0.99) pB = 0.99;
+      const remain = 1 - pB;
+      const pN = remain / 2;
+      if (r < pB) return "バ";
+      if (r < pB + pN) return "ナ";
+      return "ス";
+    }
+
+    // slot3: 「ス」確率UP
+    if (slotIndex === 3) {
+      let pS = 1 / 3 + 0.03 * probSLevel;
+      if (pS > 0.99) pS = 0.99;
+      const remain = 1 - pS;
+      const pB = remain / 2;
+      if (r < pB) return "バ";
+      if (r < pB + remain / 2) return "ナ";
+      return "ス";
+    }
+
+    // それ以外は等確率
+    const idx = Math.floor(Math.random() * CHARS.length);
+    return CHARS[idx];
+  }
+
   // スロットを回す（アニメーション付き）
   function spin() {
     if (isSpinning) return;
+
+    // コスト処理
+    if (freeSpins > 0) {
+      freeSpins--;
+    } else {
+      if (points < 10) {
+        setResult("ポイントが足りません…", "💸");
+        return;
+      }
+      points -= 10;
+    }
+    updateStatus();
+
     isSpinning = true;
     spinBtn.disabled = true;
 
@@ -340,7 +637,7 @@
 
       // 回転中はランダム文字を表示
       for (let i = 0; i < 4; i++) {
-        const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const ch = pickCharForSlot(i);
         slots[i].textContent = ch;
       }
 
@@ -350,7 +647,7 @@
         // 最終結果を決定
         let result = "";
         for (let i = 0; i < 4; i++) {
-          const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+          const ch = pickCharForSlot(i);
           slots[i].textContent = ch;
           result += ch;
         }
@@ -361,27 +658,47 @@
         // 判定へ
         judgeResult(result);
 
-        spinBtn.disabled = false;
+        // バナナスが出た場合は、「了解」を押すまではスピンボタンを無効にしておく
+        if (!lastWasBananas) {
+            spinBtn.disabled = false;
+        }
         isSpinning = false;
       }
     }, interval);
   }
 
-  // 役判定
+  // 役判定 & 報酬
   function judgeResult(result) {
     clearHighlights();
 
     const nasuIndices = findIndices(result, "ナス");
     const bananaIndices = findIndices(result, "バナナ");
-    const bananasIndices = (result === "バナナス") ? [0, 1, 2, 3] : [];
 
-    const hasNasu = nasuIndices.length > 0;
+    const isBananas = (result === "バナナス"); // バナナス
+    lastWasBananas = isBananas;
+    const isWBanana = (result === "バナナバ"); // Wバナナ
+    const isWNasu = (result === "ナスナス");   // Wナス
+    const isFourSame =
+      result[0] === result[1] &&
+      result[1] === result[2] &&
+      result[2] === result[3];
+
     const hasBanana = bananaIndices.length > 0;
-    const isBananas = (result === "バナナス");
+    const hasNasu = nasuIndices.length > 0;
 
     clearEmojiRain();
 
+    // 1. バナナス（最強）
     if (isBananas) {
+      const bananasIndices = [0, 1, 2, 3];
+      const basePt = 200;
+      const baseBanana = 5;
+      const baseNasu = 5;
+      const mult = getMultiplier(multiBananasLv);
+      const gainPt = Math.floor(basePt * mult);
+      const gainBanana = Math.floor(baseBanana * mult);
+      const gainNasu = Math.floor(baseNasu * mult);
+
       // 表示順：ナス → バナナ → バナナス
       highlight(nasuIndices, "hit-nasu");
       setResult("ナス！", "🍆");
@@ -397,28 +714,222 @@
 
       setTimeout(() => {
         highlight(bananasIndices, "hit-bananas");
-        setResult("バナナス！！！", "🍌🍆");
+        setResult(`バナナス！！！ +${gainPt}pt 🍌x${gainBanana} 🍆x${gainNasu}`, "🍌🍆");
         startEmojiRain("both");
         playSound(seBananas);
         popup.style.display = "flex";
+
+        points += gainPt;
+        bananas += gainBanana;
+        eggplants += gainNasu;
+        updateStatus();
       }, 1400);
 
-    } else if (hasBanana) {
-      highlight(bananaIndices, "hit-banana");
-      setResult("バナナ！", "🍌");
+    // 2. Wバナナ（バナナバ）
+    } else if (isWBanana) {
+      const basePt = 80;
+      const baseBanana = 2;
+      const mult = getMultiplier(multiWBananaLv);
+      const gainPt = Math.floor(basePt * mult);
+      const gainBanana = Math.floor(baseBanana * mult);
+
+      highlight([0, 1, 2, 3], "hit-banana");
+      setResult(`Wバナナ！ +${gainPt}pt 🍌x${gainBanana}`, "🍌🍌");
       startEmojiRain("banana");
       playSound(seBanana);
 
-    } else if (hasNasu) {
-      highlight(nasuIndices, "hit-nasu");
-      setResult("ナス！", "🍆");
+      points += gainPt;
+      bananas += gainBanana;
+      updateStatus();
+
+    // 3. Wナス（ナスナス）
+    } else if (isWNasu) {
+      const basePt = 50;
+      const baseNasu = 2;
+      const mult = getMultiplier(multiWNasuLv);
+      const gainPt = Math.floor(basePt * mult);
+      const gainNasu = Math.floor(baseNasu * mult);
+
+      highlight([0, 1, 2, 3], "hit-nasu");
+      setResult(`Wナス！ +${gainPt}pt 🍆x${gainNasu}`, "🍆🍆");
       startEmojiRain("nasu");
       playSound(seNasu);
 
+      points += gainPt;
+      eggplants += gainNasu;
+      updateStatus();
+
+    // 4. 4文字同じ（ババババ / ナナナナ / スススス）
+    } else if (isFourSame) {
+      highlight([0, 1, 2, 3], "hit-bananas");
+      setResult("4文字同じ！ 無料スピン+5", "🎁");
+      startEmojiRain("both");
+      playSound(seBananas);
+
+      freeSpins += 5;
+      updateStatus();
+
+    // 5. バナナ（xバナナ / バナナx）
+    } else if (hasBanana) {
+      const basePt = 20;
+      const baseBanana = 1;
+      const mult = getMultiplier(multiBananaLv);
+      const gainPt = Math.floor(basePt * mult);
+      const gainBanana = Math.floor(baseBanana * mult);
+
+      highlight(bananaIndices, "hit-banana");
+      setResult(`バナナ！ +${gainPt}pt 🍌x${gainBanana}`, "🍌");
+      startEmojiRain("banana");
+      playSound(seBanana);
+
+      points += gainPt;
+      bananas += gainBanana;
+      updateStatus();
+
+    // 6. ナス（xxナス / xナスx / ナスxx）
+    } else if (hasNasu) {
+      const basePt = 10;
+      const baseNasu = 1;
+      const mult = getMultiplier(multiNasuLv);
+      const gainPt = Math.floor(basePt * mult);
+      const gainNasu = Math.floor(baseNasu * mult);
+
+      highlight(nasuIndices, "hit-nasu");
+      setResult(`ナス！ +${gainPt}pt 🍆x${gainNasu}`, "🍆");
+      startEmojiRain("nasu");
+      playSound(seNasu);
+
+      points += gainPt;
+      eggplants += gainNasu;
+      updateStatus();
+
+    // 7. 役なし
     } else {
-      setResult("ハズレ…", "🥲");
+      setResult("役なし…", "🥲");
     }
   }
+
+  // --- 育成ボタンの処理 ---
+
+  // 🍌 → 1スロット目「バ」確率UP
+  upgradeProbBBtn.addEventListener("click", () => {
+    if (probBLevel >= maxProbLevel) return;
+    const cost = fibCosts[probBLevel];
+    if (bananas < cost) {
+      setResult("🍌が足りません…", "🍌");
+      return;
+    }
+    bananas -= cost;
+    probBLevel++;
+    setResult(`1スロット目「バ」確率UP Lv.${probBLevel}`, "⬆️");
+    updateStatus();
+  });
+
+  // 🍆 → 4スロット目「ス」確率UP
+  upgradeProbSBtn.addEventListener("click", () => {
+    if (probSLevel >= maxProbLevel) return;
+    const cost = fibCosts[probSLevel];
+    if (eggplants < cost) {
+      setResult("🍆が足りません…", "🍆");
+      return;
+    }
+    eggplants -= cost;
+    probSLevel++;
+    setResult(`4スロット目「ス」確率UP Lv.${probSLevel}`, "⬆️");
+    updateStatus();
+  });
+
+  // 倍率UP：バナナス（🍌x2f(n)🍆x2f(n)）
+  upgradeMultiBananasBtn.addEventListener("click", () => {
+    if (multiBananasLv >= maxMultiLevel) return;
+    const f = fibCosts[multiBananasLv];
+    const needBanana = 2 * f;
+    const needNasu = 2 * f;
+    if (bananas < needBanana || eggplants < needNasu) {
+      setResult("🍌か🍆が足りません…", "⚠️");
+      return;
+    }
+    bananas -= needBanana;
+    eggplants -= needNasu;
+    multiBananasLv++;
+    setResult(
+      `バナナス倍率UP Lv.${multiBananasLv} → x${getMultiplier(multiBananasLv).toFixed(1)}`,
+      "✨"
+    );
+    updateStatus();
+  });
+
+  // 倍率UP：Wバナナ（🍌x2f(n)）
+  upgradeMultiWBananaBtn.addEventListener("click", () => {
+    if (multiWBananaLv >= maxMultiLevel) return;
+    const f = fibCosts[multiWBananaLv];
+    const needBanana = 2 * f;
+    if (bananas < needBanana) {
+      setResult("🍌が足りません…", "🍌");
+      return;
+    }
+    bananas -= needBanana;
+    multiWBananaLv++;
+    setResult(
+      `Wバナナ倍率UP Lv.${multiWBananaLv} → x${getMultiplier(multiWBananaLv).toFixed(1)}`,
+      "✨"
+    );
+    updateStatus();
+  });
+
+  // 倍率UP：Wナス（🍆x2f(n)）
+  upgradeMultiWNasuBtn.addEventListener("click", () => {
+    if (multiWNasuLv >= maxMultiLevel) return;
+    const f = fibCosts[multiWNasuLv];
+    const needNasu = 2 * f;
+    if (eggplants < needNasu) {
+      setResult("🍆が足りません…", "🍆");
+      return;
+    }
+    eggplants -= needNasu;
+    multiWNasuLv++;
+    setResult(
+      `Wナス倍率UP Lv.${multiWNasuLv} → x${getMultiplier(multiWNasuLv).toFixed(1)}`,
+      "✨"
+    );
+    updateStatus();
+  });
+
+  // 倍率UP：バナナ（🍌xf(n)）
+  upgradeMultiBananaBtn.addEventListener("click", () => {
+    if (multiBananaLv >= maxMultiLevel) return;
+    const f = fibCosts[multiBananaLv];
+    const needBanana = f;
+    if (bananas < needBanana) {
+      setResult("🍌が足りません…", "🍌");
+      return;
+    }
+    bananas -= needBanana;
+    multiBananaLv++;
+    setResult(
+      `バナナ倍率UP Lv.${multiBananaLv} → x${getMultiplier(multiBananaLv).toFixed(1)}`,
+      "✨"
+    );
+    updateStatus();
+  });
+
+  // 倍率UP：ナス（🍆xf(n)）
+  upgradeMultiNasuBtn.addEventListener("click", () => {
+    if (multiNasuLv >= maxMultiLevel) return;
+    const f = fibCosts[multiNasuLv];
+    const needNasu = f;
+    if (eggplants < needNasu) {
+      setResult("🍆が足りません…", "🍆");
+      return;
+    }
+    eggplants -= needNasu;
+    multiNasuLv++;
+    setResult(
+      `ナス倍率UP Lv.${multiNasuLv} → x${getMultiplier(multiNasuLv).toFixed(1)}`,
+      "✨"
+    );
+    updateStatus();
+  });
 
   spinBtn.addEventListener("click", spin);
 </script>
