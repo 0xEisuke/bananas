@@ -692,7 +692,7 @@
     if (isBananas) {
       const bananasIndices = [0, 1, 2, 3];
       const basePt = 200;
-      const baseBanana = 10;
+      const baseBanana = 60;
       const baseNasu = 10;
       const mult = getMultiplier(multiBananasLv);
       const gainPt = Math.floor(basePt * mult);
@@ -728,7 +728,7 @@
     // 2. Wバナナ（バナナバ）
     } else if (isWBanana) {
       const basePt = 80;
-      const baseBanana = 6;
+      const baseBanana = 12;
       const mult = getMultiplier(multiWBananaLv);
       const gainPt = Math.floor(basePt * mult);
       const gainBanana = Math.floor(baseBanana * mult);
@@ -772,7 +772,7 @@
     // 5. バナナ（xバナナ / バナナx）
     } else if (hasBanana) {
       const basePt = 20;
-      const baseBanana = 3;
+      const baseBanana = 6;
       const mult = getMultiplier(multiBananaLv);
       const gainPt = Math.floor(basePt * mult);
       const gainBanana = Math.floor(baseBanana * mult);
